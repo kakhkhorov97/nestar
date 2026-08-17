@@ -10,25 +10,14 @@ export class MemberResolver {
 
 	@Mutation(() => Member)
 	public async singup(@Args('input') input: MemberInput): Promise<Member> {
-		try {
-			console.log('Mutation: singup');
-			console.log('input:', input);
-			return this.memberService.signup(input);
-		} catch (err) {
-			console.log('Error singup:', err);
-			throw new InternalServerErrorException();
-		}
+		console.log('Mutation: singup');
+		return this.memberService.signup(input);
 	}
 
 	@Mutation(() => Member)
 	public async login(@Args('input') input: LoginInput): Promise<Member> {
-		try {
-			console.log('Mutation: login');
-			return this.memberService.login(input);
-		} catch (err) {
-			console.log('Error singup:', err);
-			throw new InternalServerErrorException();
-		}
+		console.log('Mutation: login');
+		return this.memberService.login(input);
 	}
 
 	@Mutation(() => String)
