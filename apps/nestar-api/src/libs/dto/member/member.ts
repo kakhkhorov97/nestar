@@ -80,4 +80,5 @@ export class Member {
 
 	@Field(() => String, { nullable: true })
 	accessToken?: string;
+	toObject: any;
 }
