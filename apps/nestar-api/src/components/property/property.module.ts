@@ -1,25 +1,22 @@
 import { Module } from '@nestjs/common';
-import { InjectConnection, MongooseModule } from '@nestjs/mongoose';
-import { Connection } from 'mongoose';
+import { PropertyResolver } from './property.resolver';
+import { PropertyService } from './property.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import PropertySchema from '../../schemas/Property.model';
+import { AuthModule } from '../auth/auth.module';
+import { ViewModule } from '../view/view.module';
 
 @Module({
 	imports: [
-		MongooseModule.forRootAsync({
-			useFactory: () => ({
-				uri: process.env.NODE_ENV === 'production' ? process.env.MONGO_PROD : process.env.MONGO_DEV,
-			}),
-		}),
+		MongooseModule.forFeature([
+			{
+				name: 'Property',
+				schema: PropertySchema,
+			},
+		]),
+		AuthModule,
+		ViewModule,
 	],
-	exports: [MongooseModule],
+	providers: [PropertyResolver, PropertyService],
 })
-export class PropertyModule {
-	constructor(@InjectConnection() private readonly connection: Connection) {
-		if (connection.readyState === 1) {
-			console.log(
-				`MongoDB is connected into ${process.env.NODE_ENV === 'production' ? 'production' : 'development'} DB`,
-			);
-		} else {
-			console.log('DB is not connected!');
-		}
-	}
-}
+export class PropertyModule {}
