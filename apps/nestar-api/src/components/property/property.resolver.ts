@@ -37,7 +37,16 @@ export class PropertyResolver {
 		const propertyId = shapeIntoMongoDbjectId(input);
 		return await this.propertyService.getProperty(memberId, propertyId);
 	}
-}
-function shapeIntoMongoObjectId(input: string) {
-	throw new Error('Function not implemented.');
+
+	@Roles(MemberType.AGENT)
+	@UseGuards(RolesGuard)
+	@Mutation((returns) => Property)
+	public async updateProperty(
+		@Args('input') input: PropertyUpdate,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Property> {
+		console.log('Mutation: updateProperty');
+		input._id = shapeIntoMongoObjectId(input._id);
+		return await this.propertyService.updateProperty(memberId, input);
+	}
 }
