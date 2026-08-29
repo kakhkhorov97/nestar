@@ -1,65 +1,66 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import * as mongoose from 'mongoose';
+import type { ObjectId } from 'mongoose';
 import { PropertyLocation, PropertyStatus, PropertyType } from '../../enums/property.enum';
+import { Member, TotalCounter } from '../member/member';
 
 @ObjectType()
 export class Property {
 	@Field(() => String)
-	_id!: mongoose.ObjectId;
+	_id!: ObjectId;
 
 	@Field(() => PropertyType)
-	propertyType!: PropertyType;
+	propertyType: PropertyType;
 
 	@Field(() => PropertyStatus)
-	propertyStatus!: PropertyStatus;
+	propertyStatus: PropertyStatus;
 
 	@Field(() => PropertyLocation)
-	propertyLocation!: PropertyLocation;
+	propertyLocation: PropertyLocation;
 
 	@Field(() => String)
-	propertyAddress!: string;
+	propertyAddress: string;
 
 	@Field(() => String)
-	propertyTitle!: string;
+	propertyTitle: string;
 
 	@Field(() => Number)
-	propertyPrice!: number;
+	propertyPrice: number;
 
 	@Field(() => Number)
-	propertySquare!: number;
+	propertySquare: number;
 
 	@Field(() => Int)
-	propertyBeds!: number;
+	propertyBeds: number;
 
 	@Field(() => Int)
-	propertyRooms!: number;
+	propertyRooms: number;
 
 	@Field(() => Int)
-	propertyViews!: number;
+	propertyViews: number;
 
 	@Field(() => Int)
-	propertyLikes!: number;
+	propertyLikes: number;
 
 	@Field(() => Int)
-	propertyComments!: number;
+	propertyComments: number;
 
 	@Field(() => Int)
-	propertyRank!: number;
+	propertyRank: number;
 
 	@Field(() => [String])
-	propertyImages!: string[];
+	propertyImages: string[];
 
 	@Field(() => String, { nullable: true })
 	propertyDesc?: string;
 
 	@Field(() => Boolean)
-	propertyBarter!: boolean;
+	propertyBarter: boolean;
 
 	@Field(() => Boolean)
-	propertyRent!: boolean;
+	propertyRent: boolean;
 
 	@Field(() => String)
-	memberId!: mongoose.ObjectId;
+	memberId: ObjectId;
 
 	@Field(() => Date, { nullable: true })
 	soldAt?: Date;
@@ -69,4 +70,24 @@ export class Property {
 
 	@Field(() => Date, { nullable: true })
 	constructedAt?: Date;
+
+	@Field(() => Date)
+	createdAt: Date;
+
+	@Field(() => Date)
+	updatedAt: Date;
+
+	/** from aggregation **/
+
+	@Field(() => Member, { nullable: true })
+	memberData?: Member;
+}
+
+@ObjectType()
+export class Properties {
+	@Field(() => [Property])
+	list: Property[];
+
+	@Field(() => [TotalCounter], { nullable: true })
+	metaCounter: TotalCounter[];
 }

@@ -14,5 +14,5 @@ export const getSerialForImage = (filename: string) => {
 };
 
 export const shapeIntoMongoDbjectId = (target: any) => {
-	return typeof target === 'string' ? new Object(target) : target;
+	return typeof target === 'string' ? new ObjectId(target) : target;
 };
