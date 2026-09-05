@@ -6,7 +6,7 @@ import * as mongoose from 'mongoose';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { WithoutGuard } from '../auth/guards/without.guard';
-import { shapeIntoMongoDbjectId } from '../../libs/config';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 import type { ObjectId } from 'mongoose';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -40,7 +40,7 @@ export class BoardArticleResolver {
 		@AuthMember('_id') memberId: mongoose.ObjectId,
 	): Promise<BoardArticle> {
 		console.log('Query: getBoardArticle');
-		const articleId = shapeIntoMongoDbjectId(input);
+		const articleId = shapeIntoMongoObjectId(input);
 		return await this.boardArticleService.getBoardArticle(memberId, articleId);
 	}
 
@@ -51,7 +51,7 @@ export class BoardArticleResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<BoardArticle> {
 		console.log('Mutation: updateBoardArticle');
-		input._id = shapeIntoMongoDbjectId(input._id);
+		input._id = shapeIntoMongoObjectId(input._id);
 		return await this.boardArticleService.updateBoardArticle(memberId, input);
 	}
 	@UseGuards(WithoutGuard)
@@ -85,7 +85,7 @@ export class BoardArticleResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<BoardArticle> {
 		console.log('Mutation: updateBoardArticleByAdmin');
-		input._id = shapeIntoMongoDbjectId(input._id);
+		input._id = shapeIntoMongoObjectId(input._id);
 		return await this.boardArticleService.updateBoardArticleByAdmin(input);
 	}
 
@@ -97,7 +97,7 @@ export class BoardArticleResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<BoardArticle> {
 		console.log('Mutation: removeBoardArticleByAdmin');
-		const articleId = shapeIntoMongoDbjectId(input);
+		const articleId = shapeIntoMongoObjectId(input);
 		return await this.boardArticleService.removeBoardArticleByAdmin(articleId);
 	}
 }

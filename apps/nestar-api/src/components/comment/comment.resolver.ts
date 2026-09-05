@@ -12,7 +12,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CommentInput, CommentsInquiry } from '../../libs/dto/comment/comment.input';
 import { CommentUpdate } from '../../libs/dto/comment/comment.update';
-import { shapeIntoMongoDbjectId } from '../../libs/config';
+import { shapeIntoMongoObjectId } from '../../libs/config';
 import { Comment as CommentDTO, Comments } from '../../libs/dto/comment/comment';
 import { MemberType } from '../../libs/enums/member.enum';
 
@@ -37,7 +37,7 @@ export class CommentResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<CommentDTO> {
 		console.log('Mutation: updateComment');
-		input._id = shapeIntoMongoDbjectId(input._id);
+		input._id = shapeIntoMongoObjectId(input._id);
 		return await this.commentService.updateComment(memberId, input);
 	}
 
@@ -48,7 +48,7 @@ export class CommentResolver {
 		@AuthMember('_id') memberId: ObjectId,
 	): Promise<Comments> {
 		console.log('Query: getComments');
-		input.search.commentRefId = shapeIntoMongoDbjectId(input.search.commentRefId);
+		input.search.commentRefId = shapeIntoMongoObjectId(input.search.commentRefId);
 		const result = await this.commentService.getComments(memberId, input);
 		return result;
 	}
@@ -60,7 +60,7 @@ export class CommentResolver {
 	@Mutation(() => CommentDTO)
 	public async removeCommentByAdmin(@Args('commentId') input: string): Promise<CommentDTO> {
 		console.log('Mutation: removeCommentByAdmin');
-		const commentId = shapeIntoMongoDbjectId(input);
+		const commentId = shapeIntoMongoObjectId(input);
 		return await this.commentService.removeCommentByAdmin(commentId);
 	}
 }

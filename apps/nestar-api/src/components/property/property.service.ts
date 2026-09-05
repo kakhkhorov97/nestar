@@ -16,7 +16,7 @@ import { PropertyStatus } from '../../libs/enums/property.enum';
 import { ViewService } from '../view/view.service';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import moment from 'moment';
-import { lookupMember, shapeIntoMongoDbjectId } from '../../libs/config';
+import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 
 @Injectable()
 export class PropertyService {
@@ -150,7 +150,7 @@ export class PropertyService {
 			options,
 			text,
 		} = input.search;
-		if (memberId) match.memberId = shapeIntoMongoDbjectId(memberId);
+		if (memberId) match.memberId = shapeIntoMongoObjectId(memberId);
 		if (locationList) match.propertyLocation = { $in: locationList };
 		if (roomsList) match.propertyRooms = { $in: roomsList };
 		if (bedsList) match.propertyBeds = { $in: bedsList };
