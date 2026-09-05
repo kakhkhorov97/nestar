@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongoose';
 
 export interface T {
-	[ket: string]: any;
+	[ke: string]: any;
 }
 
 export interface StatisticModifier {

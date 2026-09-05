@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
 import { Member, Members } from '../../libs/dto/member/member';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
-import { exec } from 'child_process';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { AuthService } from '../auth/auth.service';
@@ -11,15 +10,16 @@ import { MemberUpdate } from '../../libs/dto/member/member.update';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { ViewService } from '../view/view.service';
 import { ViewGroup } from '../../libs/enums/view.enum';
-import { retry } from 'rxjs';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import { Follower, Following, MeFollowed } from '../../libs/dto/follow/follow';
 
 @Injectable()
 export class MemberService {
 	constructor(
 		@InjectModel('Member') private readonly memberModel: Model<Member>,
+		@InjectModel('Follow') private readonly followModel: Model<Follower | Following>,
 		private authService: AuthService,
 		private viewService: ViewService,
 		private likeService: LikeService,
@@ -81,7 +81,7 @@ export class MemberService {
 		return result;
 	}
 
-	public async getMember(memberId: ObjectId | null, targetId: ObjectId): Promise<Member> {
+	async getMember(memberId: ObjectId | null, targetId: ObjectId): Promise<Member> {
 		const search: T = {
 			_id: targetId,
 			memberStatus: {
@@ -94,17 +94,26 @@ export class MemberService {
 		if (memberId) {
 			const viewInput = { memberId: memberId, viewRefId: targetId, viewGroup: ViewGroup.MEMBER };
 			const newView = await this.viewService.recordView(viewInput);
-
 			if (newView) {
 				await this.memberModel.findOneAndUpdate(search, { $inc: { memberViews: 1 } }, { new: true }).exec();
 				targetMember.memberViews++;
 			}
+
+			const likeInput = { memberId: memberId, likeRefId: targetId, likeGroup: LikeGroup.MEMBER };
+			targetMember.meLiked = await this.likeService.checkLikeExistence(likeInput);
+
+			targetMember.meFollowed = await this.checkSubscribtion(memberId, targetId);
 		}
 
 		return targetMember;
 	}
 
-	public async getAgents(memberId: ObjectId, input: AgentsInquiry): Promise<Members> {
+	private async checkSubscribtion(followerId: ObjectId, followingId: ObjectId): Promise<MeFollowed[]> {
+		const result = await this.followModel.findOne({ followingId: followingId, followerId: followerId }).exec();
+		return result ? [{ followerId: followerId, followingId: followingId, myFollowing: true }] : [];
+	}
+
+	async getAgents(memberId: ObjectId, input: AgentsInquiry): Promise<Members> {
 		const { text } = input.search;
 		const match: T = { memberType: MemberType.AGENT, memberStatus: MemberStatus.ACTIVE };
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
@@ -124,7 +133,7 @@ export class MemberService {
 				},
 			])
 			.exec();
-		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
+		if (!result[0].list.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];
 	}
@@ -141,6 +150,7 @@ export class MemberService {
 			likeGroup: LikeGroup.MEMBER,
 		};
 
+		// LIKE TOGGLE via Like Modules
 		const modifier: number = await this.likeService.toggleLike(input);
 		const result = await this.memberStatsEditor({ _id: likeRefId, targetKey: 'memberLikes', modifier: modifier });
 
@@ -153,7 +163,7 @@ export class MemberService {
 		const match: T = {};
 		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
 
-		if (memberStatus) match.memberStatus = memberStatus;
+		if (memberStatus) match.MemberStatus = memberStatus;
 		if (memberType) match.memberType = memberType;
 		if (text) match.memberNick = { $regex: new RegExp(text, 'i') };
 
@@ -176,6 +186,9 @@ export class MemberService {
 			throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 		}
 
+		// meLiked
+		// meFollowed
+
 		return result[0];
 	}
 
@@ -187,15 +200,21 @@ export class MemberService {
 		return result;
 	}
 
-	public async memberStatsEditor(input: StatisticModifier): Promise<Member> {
-		console.log('executed');
+	async memberStatsEditor(input: StatisticModifier): Promise<Member> {
 		const { _id, targetKey, modifier } = input;
 		const result = await this.memberModel
-			.findOneAndUpdate(_id, { $inc: { [targetKey]: modifier } }, { new: true })
+			.findByIdAndUpdate(
+				_id,
+				{
+					$inc: { [targetKey]: modifier },
+				},
+				{ new: true },
+			)
 			.exec();
 
-		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
-
+		if (!result) {
+			throw new InternalServerErrorException(Message.UPDATE_FAILED);
+		}
 		return result;
 	}
 }

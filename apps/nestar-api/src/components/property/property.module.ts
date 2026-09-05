@@ -21,7 +21,7 @@ import { LikeModule } from '../like/like.module';
 		MemberModule,
 		LikeModule,
 	],
-	providers: [PropertyResolver, PropertyService],
+	providers: [PropertyService, PropertyResolver],
 	exports: [PropertyService],
 })
 export class PropertyModule {}

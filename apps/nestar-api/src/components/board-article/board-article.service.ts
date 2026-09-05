@@ -2,8 +2,7 @@ import { BadRequestException, Injectable, InternalServerErrorException } from '@
 import { InjectModel } from '@nestjs/mongoose';
 import { MemberService } from '../member/member.service';
 import { ViewService } from '../view/view.service';
-
-import { Model, ObjectId } from 'mongoose';
+import { Model } from 'mongoose';
 import { BoardArticleStatus } from '../../libs/enums/board-article.enum';
 import { ViewGroup } from '../../libs/enums/view.enum';
 import { StatisticModifier, T } from '../../libs/types/common';
@@ -19,15 +18,15 @@ import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
 import { LikeService } from '../like/like.service';
+import type { ObjectId } from 'mongoose';
 
 @Injectable()
 export class BoardArticleService {
 	constructor(
-		@InjectModel('BoardArticle')
-		private readonly boardArticleModel: Model<BoardArticle>,
+		@InjectModel('BoardArticle') private readonly boardArticleModel: Model<BoardArticle>,
 		private readonly memberService: MemberService,
 		private readonly viewService: ViewService,
-		private likeService: LikeService,
+		private readonly likeService: LikeService,
 	) {}
 
 	public async createBoardArticle(memberId: ObjectId, input: BoardArticleInput): Promise<BoardArticle> {

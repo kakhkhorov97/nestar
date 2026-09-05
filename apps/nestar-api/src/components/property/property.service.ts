@@ -1,18 +1,12 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, ObjectId } from 'mongoose';
+import { Properties, Property } from '../../libs/dto/property/property';
 import { Direction, Message } from '../../libs/enums/common.enum';
 import { MemberService } from '../member/member.service';
-import { Properties, Property } from '../../libs/dto/property/property';
-import {
-	AgentPropertiesInquiry,
-	AllPropertiesInquiry,
-	PropertiesInquiry,
-	PropertyInput,
-} from '../../libs/dto/property/property.inputs';
-import { ViewGroup } from '../../libs/enums/view.enum';
 import { StatisticModifier, T } from '../../libs/types/common';
 import { PropertyStatus } from '../../libs/enums/property.enum';
+import { ViewGroup } from '../../libs/enums/view.enum';
 import { ViewService } from '../view/view.service';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
 import moment from 'moment';
@@ -20,6 +14,12 @@ import { lookupMember, shapeIntoMongoObjectId } from '../../libs/config';
 import { LikeService } from '../like/like.service';
 import { LikeInput } from '../../libs/dto/like/like.input';
 import { LikeGroup } from '../../libs/enums/like.enum';
+import {
+	AgentPropertiesInquiry,
+	AllPropertiesInquiry,
+	PropertiesInquiry,
+	PropertyInput,
+} from '../../libs/dto/property/property.inputs';
 
 @Injectable()
 export class PropertyService {
@@ -30,28 +30,24 @@ export class PropertyService {
 		private likeService: LikeService,
 	) {}
 
-	public async createProperty(input: PropertyInput): Promise<Property> {
+	async createProperty(input: PropertyInput): Promise<Property> {
 		try {
 			const result = await this.propertyModel.create(input);
-			await this.memberService.memberStatsEditor({
-				_id: result.memberId,
-				targetKey: 'memberProperties',
-				modifier: 1,
-			});
+			await this.memberService.memberStatsEditor({ _id: result.memberId, targetKey: 'memberProperties', modifier: 1 });
 			return result;
 		} catch (err) {
-			console.log('Error, Service.model:', err instanceof Error ? err.message : err);
+			console.log('Error, Service.model:', err);
 			throw new BadRequestException(Message.CREATE_FAILED);
 		}
 	}
 
-	public async getProperty(memberId: ObjectId | null, propertyId: ObjectId): Promise<Property> {
+	public async getProperty(memberId: ObjectId, propertyId: ObjectId): Promise<Property> {
 		const search: T = {
 			_id: propertyId,
 			propertyStatus: PropertyStatus.ACTIVE,
 		};
 
-		const targetProperty = (await this.propertyModel.findOne(search).lean().exec()) as Property | null;
+		const targetProperty: Property | null = await this.propertyModel.findOne(search).lean().exec();
 		if (!targetProperty) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {
@@ -63,23 +59,14 @@ export class PropertyService {
 			}
 
 			// meLiked
+
+			const likeInput = { memberId: memberId, likeRefId: propertyId, likeGroup: LikeGroup.PROPERTY };
+			targetProperty.meLiked = await this.likeService.checkLikeExistence(likeInput);
+			targetProperty.meLiked;
 		}
 
-		targetProperty.memberData = await this.memberService.getMember(null, targetProperty.memberId);
+		targetProperty.memberData = await this.memberService.getMember(null as any, targetProperty.memberId);
 		return targetProperty;
-	}
-
-	public async propertyStatsEditor(input: StatisticModifier): Promise<Property> {
-		const { _id, targetKey, modifier } = input;
-		return (await this.propertyModel
-			.findByIdAndUpdate(
-				_id,
-				{ $inc: { [targetKey]: modifier } },
-				{
-					new: true,
-				},
-			)
-			.exec()) as Property;
 	}
 
 	public async updateProperty(memberId: ObjectId, input: PropertyUpdate): Promise<Property> {
@@ -99,7 +86,6 @@ export class PropertyService {
 			})
 			.exec();
 		if (!result) throw new InternalServerErrorException(Message.UPDATE_FAILED);
-
 		if (soldAt || deletedAt) {
 			await this.memberService.memberStatsEditor({
 				_id: memberId,
@@ -127,7 +113,7 @@ export class PropertyService {
 						list: [
 							{ $skip: (input.page - 1) * input.limit },
 							{ $limit: input.limit },
-							// meLiked
+							// meLikednpm
 							lookupMember,
 							{ $unwind: '$memberData' },
 						],
@@ -172,7 +158,7 @@ export class PropertyService {
 		}
 	}
 
-	public async getAgentProperties(memberId: ObjectId, input: AllPropertiesInquiry): Promise<Properties> {
+	public async getAgentProperties(memberId: ObjectId, input: AgentPropertiesInquiry): Promise<Properties> {
 		const { propertyStatus } = input.search;
 		if (propertyStatus === PropertyStatus.DELETE) throw new BadRequestException(Message.NOT_ALLOWED_REQUEST);
 
@@ -226,7 +212,9 @@ export class PropertyService {
 	public async getAllPropertiesByAdmin(input: AllPropertiesInquiry): Promise<Properties> {
 		const { propertyStatus, propertyLocationList } = input.search;
 		const match: T = {};
-		const sort: T = { [input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC };
+		const sort: T = {
+			[input?.sort ?? 'createdAt']: input?.direction ?? Direction.DESC,
+		};
 
 		if (propertyStatus) match.propertyStatus = propertyStatus;
 		if (propertyLocationList) match.propertyLocation = { $in: propertyLocationList };
@@ -248,6 +236,7 @@ export class PropertyService {
 				},
 			])
 			.exec();
+
 		if (!result.length) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		return result[0];
@@ -286,6 +275,23 @@ export class PropertyService {
 		const result = await this.propertyModel.findOneAndDelete(search).exec();
 		if (!result) throw new InternalServerErrorException(Message.REMOVE_FAILED);
 
+		return result;
+	}
+
+	public async propertyStatsEditor(input: StatisticModifier): Promise<Property> {
+		const { _id, targetKey, modifier } = input;
+		const result = await this.propertyModel
+			.findByIdAndUpdate(
+				_id,
+				{ $inc: { [targetKey]: modifier } },
+				{
+					new: true,
+				},
+			)
+			.exec();
+		if (!result) {
+			throw new InternalServerErrorException(Message.UPDATE_FAILED);
+		}
 		return result;
 	}
 }
