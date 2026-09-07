@@ -7,7 +7,12 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { AuthMember } from '../auth/decorators/authMember.decorator';
 import type { ObjectId } from 'mongoose';
 import { Properties, Property } from '../../libs/dto/property/property';
-import { AgentPropertiesInquiry, AllPropertiesInquiry, PropertyInput } from '../../libs/dto/property/property.inputs';
+import {
+	AgentPropertiesInquiry,
+	AllPropertiesInquiry,
+	PropertiesInquiry,
+	PropertyInput,
+} from '../../libs/dto/property/property.inputs';
 import { WithoutGuard } from '../auth/guards/without.guard';
 import { shapeIntoMongoObjectId } from '../../libs/config';
 import { PropertyUpdate } from '../../libs/dto/property/property.update';
@@ -38,6 +43,16 @@ export class PropertyResolver {
 		console.log('Query: getProperty');
 		const propertyId = shapeIntoMongoObjectId(input);
 		return await this.propertyService.getProperty(memberId, propertyId);
+	}
+
+	@UseGuards(WithoutGuard)
+	@Query((returns) => Properties)
+	public async getProperties(
+		@Args('input') input: PropertiesInquiry,
+		@AuthMember('_id') memberId: ObjectId,
+	): Promise<Properties> {
+		console.log('Query: getProperties');
+		return await this.propertyService.getProperties(memberId, input);
 	}
 
 	@Roles(MemberType.AGENT)

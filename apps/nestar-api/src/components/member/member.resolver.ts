@@ -15,6 +15,8 @@ import { WithoutGuard } from '../auth/guards/without.guard';
 import { GraphQLUpload, FileUpload } from 'graphql-upload';
 import { createWriteStream } from 'fs';
 import { Message } from '../../libs/enums/common.enum';
+import { multicast } from 'rxjs';
+import { query } from 'express';
 
 @Resolver()
 export class MemberResolver {

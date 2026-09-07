@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ObjectId } from 'mongoose';
+import { Model } from 'mongoose';
+import type { ObjectId } from 'mongoose';
 import { Member, Members } from '../../libs/dto/member/member';
 import { AgentsInquiry, LoginInput, MemberInput, MembersInquiry } from '../../libs/dto/member/member.input';
 import { MemberStatus, MemberType } from '../../libs/enums/member.enum';
@@ -88,7 +89,7 @@ export class MemberService {
 				$in: [MemberStatus.ACTIVE, MemberStatus.BLOCK],
 			},
 		};
-		const targetMember = await this.memberModel.findOne(search).lean().exec();
+		const targetMember = await this.memberModel.findOne(search).exec();
 		if (!targetMember) throw new InternalServerErrorException(Message.NO_DATA_FOUND);
 
 		if (memberId) {
