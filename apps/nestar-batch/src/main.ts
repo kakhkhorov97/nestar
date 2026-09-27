@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { BatchModule } from './batch.module';
+import { NestarBatchModule } from './batch.module';
 
 async function bootstrap() {
-	const app = await NestFactory.create(BatchModule);
+	const app = await NestFactory.create(NestarBatchModule);
 
 	await app.listen(process.env.PORT_BATCH ?? 3001);
 }

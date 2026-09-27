@@ -35,7 +35,7 @@ export class BatchController {
 		}
 	}
 
-	@Cron('20 0 1 * * *', { name: BATCH_TOP_PROPERTIES })
+	@Cron('20 * * * * *', { name: BATCH_TOP_PROPERTIES })
 	async batchProperties() {
 		try {
 			this.logger['context'] = BATCH_TOP_PROPERTIES;
@@ -46,7 +46,7 @@ export class BatchController {
 		}
 	}
 
-	@Cron('40 0 1 * * *', { name: BATCH_TOP_AGENTS })
+	@Cron('40* * * * *', { name: BATCH_TOP_AGENTS })
 	async batchAgents() {
 		try {
 			this.logger['context'] = BATCH_TOP_AGENTS;
